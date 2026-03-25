@@ -1,0 +1,4 @@
+geopandas
+rasterio
+matplotlib
+scikit-image
