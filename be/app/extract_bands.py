@@ -5,6 +5,7 @@ from rasterio.enums import Resampling
 from rasterio.mask import mask
 import geopandas as gpd
 from skimage.transform import resize
+from scipy.ndimage import median_filter, binary_opening
 import matplotlib.pyplot as plt
 
 base_path = "data/raw/S2B_MSIL2A_20260302T053639_N0512_R005_T43REN_20260302T093017.SAFE/GRANULE/*/IMG_DATA"
@@ -61,12 +62,38 @@ ndwi = (green - nir) / (green + nir + 1e-6)
 ndbi = (swir_crop - nir) / (swir_crop + nir + 1e-6)
 
 classification = np.zeros_like(ndvi, dtype=np.uint8)
-classification[ndwi > 0.2] = 1
+classification[ndwi > 0.1] = 1
 classification[(ndvi > 0.5) & (classification == 0)] = 2
-classification[(ndbi > 0.1) & (classification == 0)] = 3
+classification[(ndbi > 0.15) & (ndvi < 0.3) & (classification == 0)] = 3
+classification = median_filter(classification, size=3)
 
-plt.imshow(classification, cmap="viridis")
-plt.title("Classification Map")
-plt.colorbar()
+built_up = (classification == 3)
+built_up = binary_opening(built_up, structure=np.ones((3,3)))
+classification[built_up] = 3
+
+from matplotlib.colors import ListedColormap, BoundaryNorm
+
+cmap = ListedColormap(["#2d2d2d", "#1f77b4", "#2ca02c", "#d62728", "#ff7f0e"])
+norm = BoundaryNorm(np.arange(-0.5, 5.5, 1), cmap.N)
+
+plt.figure(figsize=(12, 10))
+plt.imshow(classification, cmap=cmap, norm=norm, interpolation="nearest")
+plt.title("0=bg, 1=water, 2=veg, 3=built, 4=soil")
+
+# colorbar with discrete labels
+cbar = plt.colorbar(ticks=[0, 1, 2, 3, 4])
+cbar.ax.set_yticklabels(["bg", "water", "veg", "built", "soil"])
+
+# add explicit legend
+from matplotlib.patches import Patch
+legend_patches = [
+    Patch(color="#2d2d2d", label="Background"),
+    Patch(color="#1f77b4", label="Water"),
+    Patch(color="#2ca02c", label="Vegetation"),
+    Patch(color="#d62728", label="Built-up"),
+    Patch(color="#ff7f0e", label="Soil"),
+]
+plt.legend(handles=legend_patches, loc="lower right", framealpha=0.9)
+
 plt.axis("off")
 plt.show()
