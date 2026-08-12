@@ -1,1 +1,33 @@
-/data
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environment (uv / venv)
+.venv/
+venv/
+env/
+
+# Data & raw Sentinel-2 archives
+data/raw/
+data/extracted/
+data/hisar_mask.geojson
+*.SAFE/
+*.SAFE
+*.jp2
+*.tif
+*.tiff
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE & OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
